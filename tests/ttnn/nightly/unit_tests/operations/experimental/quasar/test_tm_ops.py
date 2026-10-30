@@ -970,6 +970,16 @@ def test_quasar_untilize_with_unpadding_rank_gt_4_rejects_non_prefix_crop(device
         ttnn.experimental.quasar.untilize_with_unpadding(ttnn_in, output_end)
 
 
+# An end past a leading dim must be rejected even when the fused extent still fits in the input's.
+def test_quasar_untilize_with_unpadding_rank_gt_4_rejects_out_of_range_leading_end(device, expect_error):
+    ttnn_in = ttnn.from_torch(
+        torch.rand([2, 3, 4, 64, 64], dtype=torch.bfloat16), layout=ttnn.TILE_LAYOUT, device=device
+    )
+
+    with expect_error(RuntimeError, "out of range for dimension 1"):
+        ttnn.experimental.quasar.untilize_with_unpadding(ttnn_in, [0, 3, 3, 63, 63])
+
+
 @pytest.mark.parametrize("dtype", [ttnn.bfloat16, ttnn.bfloat8_b])
 def test_quasar_untilize_l1_output_reserved_in_budget(device, dtype):
     tile_dim, out_tile_bytes = 32, 2048  # untilize emits bfloat16 for both input dtypes

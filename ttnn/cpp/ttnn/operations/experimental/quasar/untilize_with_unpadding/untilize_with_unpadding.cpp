@@ -97,6 +97,13 @@ Tensor untilize_with_unpadding(
         // which is the requested crop only if no fused dim is cut after an outer one keeps several indices.
         bool outer_keeps_several = false;
         for (size_t index = 0; index + 3 < input_shape.rank(); ++index) {
+            // Fusing the leading dims hides an out-of-range end on one of them, so check each before fusion.
+            TT_FATAL(
+                output_tensor_end[index] < input_shape[index],
+                "untilize_with_unpadding: output_tensor_end {} is out of range for dimension {} of input {}",
+                output_tensor_end,
+                index,
+                input_shape);
             TT_FATAL(
                 !outer_keeps_several || output_tensor_end[index] + 1 == input_shape[index],
                 "untilize_with_unpadding: cannot crop dimension {} of the rank {} input {} to output_tensor_end {}. "
